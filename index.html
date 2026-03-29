@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Special For You</title>
+  <style>
+    /* Background Gelap dengan Pola Titik (seperti di video) */
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #070e13; /* Warna gelap dasar */
+      background-image: radial-gradient(rgba(255, 100, 150, 0.1) 1px, transparent 1px);
+      background-size: 50px 50px;
+      color: #fff;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Tombol Love Awal */
+    .open {
+      position: absolute;
+      z-index: 100;
+      text-align: center;
+      cursor: pointer;
+      transition: opacity 0.5s, transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .open i {
+      font-size: 80px;
+      font-style: normal;
+      display: block;
+      animation: pulse 1s infinite;
+      text-shadow: 0 0 25px #ff2a5f;
+    }
+    .open span {
+      font-size: 16px;
+      margin-top: 10px;
+      display: block;
+      color: #ffb3c6;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.1); opacity: 0.8; }
+    }
+
+    /* Container Utama */
+    #content {
+      display: none;
+      width: 100%;
+      height: 100vh;
+      position: relative;
+    }
+
+    /* Teks Ucapan Bergantian - Diposisikan di atas agar tidak tertutup */
+    #text-container {
+      position: absolute;
+      top: 25%; /* Beri jarak aman dari atas */
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+      color: #fef1f1;
+      text-shadow: 0 0 10px #ff99cc, 0 0 20px #ff66a3;
+      opacity: 0;
+      transition: opacity 1s ease-in-out;
+      width: 90%;
+      max-width: 500px;
+      z-index: 50; /* Di atas bunga */
+    }
+
+    /* Area Bunga - Diposisikan Fix di paling bawah */
+    .flower-box {
+      position: absolute;
+      bottom: -20px; /* Sedikit masuk ke bawah layar agar tidak melayang */
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 550px; /* Batasi lebar wadah */
+      height: 65vh; /* Batasi tinggi maksimal agar tidak menutupi teks */
+      z-index: 10;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      overflow: visible;
+    }
+
+    /* Bunga Glowing Pink/Red */
+    .flower-svg {
+      width: 100%; /* SVG mengisi wadah */
+      height: 100%;
+      overflow: visible;
+      filter: drop-shadow(0 0 15px rgba(255, 102, 163, 0.8));
+    }
+
+    /* CSS Animasi Dasar SVG */
+    .stem {
+      stroke-dasharray: 500;
+      stroke-dashoffset: 500; /* Tangkai disembunyikan dulu */
+    }
+    
+    /* Animasi Daun membuka + memutar */
+    .leaf {
+      transform: scale(0) rotate(-20deg);
+      transition: transform 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.1) 1.5s;
+    }
+
+    /* Struktur Kelopak untuk animasi mekar detail */
+    .petal {
+      transform: scale(0);
+      transform-origin: center bottom;
+      transition: transform 1s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    }
+
+    /* Kelopak mekar berurutan */
+    /* Bunga Tengah */
+    .bloom-center .petal-center { transition-delay: 2.2s; }
+    .bloom-center .petal-side { transition-delay: 2.8s; }
+
+    /* Bunga Kiri 1 */
+    .bloom-left-1 .petal-center { transition-delay: 3.1s; }
+    .bloom-left-1 .petal-side { transition-delay: 3.4s; }
+
+    /* Bunga Kanan 1 */
+    .bloom-right-1 .petal-center { transition-delay: 3.7s; }
+    .bloom-right-1 .petal-side { transition-delay: 4.0s; }
+
+    /* Bunga Kiri 2 (Baru) */
+    .bloom-left-2 .petal-center { transition-delay: 4.3s; }
+    .bloom-left-2 .petal-side { transition-delay: 4.6s; }
+
+    /* Bunga Kanan 2 (Baru) */
+    .bloom-right-2 .petal-center { transition-delay: 4.9s; }
+    .bloom-right-2 .petal-side { transition-delay: 5.2s; }
+
+    /* Inti bunga & partikel muncul paling akhir */
+    .pollen, .glowing-dot {
+      opacity: 0;
+      transition: opacity 1.5s ease-in 5.5s;
+    }
+    
+    /* Animasi partikel cahaya beterbangan */
+    .glowing-dot {
+      animation: floatDot 4s infinite alternate ease-in-out;
+    }
+    @keyframes floatDot {
+      from { transform: translateY(0) scale(1); opacity: 0.4; }
+      to { transform: translateY(-25px) scale(1.4); opacity: 1; }
+    }
+
+    /* STATE ANIMASI AKTIF */
+    
+    /* Memunculkan Daun & Kelopak */
+    .active .leaf { transform: scale(1) rotate(0deg); }
+    .active .petal { transform: scale(1); }
+    .active .pollen, .active .glowing-dot { opacity: 1; }
+
+    /* Animasi Sway (Bergoyang Tertiup Angin) setelah mekar sempurna */
+    @keyframes flowerSway {
+      0%, 100% { transform: translateX(-50%) rotate(0deg); }
+      25% { transform: translateX(-50.5%) rotate(-0.5deg); }
+      75% { transform: translateX(-49.5%) rotate(0.5deg); }
+    }
+    .fully-bloomed {
+      animation: flowerSway 6s infinite ease-in-out 6s; /* Mulai goyang setelah mekar sempurna (6s) */
+      transform-origin: bottom center;
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="open" id="open-btn" onclick="startAnimation()">
+    <i>❤️</i>
+    <span>Klik love nya</span>
+  </div>
+
+  <div id="content">
+    
+    <div id="text-container"></div>
+    
+    <div class="flower-box" id="flower-area">
+        <svg class="flower-svg" viewBox="0 0 200 320" xmlns="http://www.w3.org/2000/svg">
+          
+          <g id="stems-group">
+            <path class="stem stem-main" d="M100 320 Q105 200 100 100" fill="none" stroke="#1b4d4d" stroke-width="4" stroke-linecap="round"/>
+            <path class="stem stem-left-1" d="M100 220 Q70 180 50 140" fill="none" stroke="#1b4d4d" stroke-width="3" stroke-linecap="round"/>
+            <path class="stem stem-right-1" d="M100 250 Q130 200 150 160" fill="none" stroke="#1b4d4d" stroke-width="3" stroke-linecap="round"/>
+            <path class="stem stem-left-2" d="M100 240 Q60 200 30 160" fill="none" stroke="#1b4d4d" stroke-width="3" stroke-linecap="round"/>
+            <path class="stem stem-right-2" d="M100 260 Q140 220 170 180" fill="none" stroke="#1b4d4d" stroke-width="3" stroke-linecap="round"/>
+          </g>
+
+          <g id="leaves-group">
+            <path class="leaf" d="M100 260 Q70 260 60 230 Q90 230 100 260" fill="#1b4d4d" style="transform-origin: 100px 260px;"/>
+            <path class="leaf" d="M100 280 Q130 280 140 240 Q110 250 100 280" fill="#1b4d4d" style="transform-origin: 100px 280px;"/>
+            <path class="leaf" d="M100 200 Q80 180 60 190 Q80 210 100 200" fill="#256b6b" style="transform-origin: 100px 200px;"/>
+            <path class="leaf" d="M100 150 Q120 130 140 140 Q120 160 100 150" fill="#256b6b" style="transform-origin: 100px 150px;"/>
+            <path class="leaf" d="M100 230 Q70 220 50 180 Q80 190 100 230" fill="#1b4d4d" style="transform-origin: 100px 230px;"/>
+            <path class="leaf" d="M100 250 Q130 240 150 200 Q120 210 100 250" fill="#1b4d4d" style="transform-origin: 100px 250px;"/>
+          </g>
+
+          <g id="blooms-group">
+            <g class="bloom-head bloom-center" transform="translate(100, 100)">
+              <path class="petal petal-side" d="M0 0 Q-30 -10 -40 -30 Q-20 -40 0 0" fill="#ff66a3" style="transform-origin: 0 0;"/>
+              <path class="petal petal-side" d="M0 0 Q30 -10 40 -30 Q20 -40 0 0" fill="#ff66a3" style="transform-origin: 0 0;"/>
+              <path class="petal petal-center" d="M0 0 Q-20 -30 0 -50 Q20 -30 0 0" fill="#ff4d4d" style="transform-origin: 0 0;"/>
+              <circle cx="0" cy="0" r="6" fill="#fcf6b1" class="pollen"/>
+            </g>
+
+            <g class="bloom-head bloom-left-1" transform="translate(50, 140)">
+              <path class="petal petal-side" d="M0 0 Q-25 -5 -30 -20 Q-15 -30 0 0" fill="#ff66a3" style="transform-origin: 0 0;"/>
+              <path class="petal petal-side" d="M0 0 Q25 -5 30 -20 Q15 -30 0 0" fill="#ff66a3" style="transform-origin: 0 0;"/>
+              <path class="petal petal-center" d="M0 0 Q-15 -25 0 -40 Q15 -25 0 0" fill="#ff4d4d" style="transform-origin: 0 0;"/>
+              <circle cx="0" cy="0" r="5" fill="#fcf6b1" class="pollen"/>
+            </g>
+
+            <g class="bloom-head bloom-right-1" transform="translate(150, 160)">
+              <path class="petal petal-side" d="M0 0 Q-25 -5 -30 -20 Q-15 -30 0 0" fill="#ff66a3" style="transform-origin: 0 0;"/>
+              <path class="petal petal-side" d="M0 0 Q25 -5 30 -20 Q15 -30 0 0" fill="#ff66a3" style="transform-origin: 0 0;"/>
+              <path class="petal petal-center" d="M0 0 Q-15 -25 0 -40 Q15 -25 0 0" fill="#ff4d4d" style="transform-origin: 0 0;"/>
+              <circle cx="0" cy="0" r="5" fill="#fcf6b1" class="pollen"/>
+            </g>
+            
+            <g class="bloom-head bloom-left-2" transform="translate(30, 160)">
+                <path class="petal petal-side" d="M0 0 Q-25 -5 -30 -20 Q-15 -30 0 0" fill="#ff66a3" style="transform-origin: 0 0;"/>
+                <path class="petal petal-side" d="M0 0 Q25 -5 30 -20 Q15 -30 0 0" fill="#ff66a3" style="transform-origin: 0 0;"/>
+                <path class="petal petal-center" d="M0 0 Q-15 -25 0 -40 Q15 -25 0 0" fill="#ff4d4d" style="transform-origin: 0 0;"/>
+                <circle cx="0" cy="0" r="5" fill="#fcf6b1" class="pollen"/>
+            </g>
+
+            <g class="bloom-head bloom-right-2" transform="translate(170, 180)">
+                <path class="petal petal-side" d="M0 0 Q-25 -5 -30 -20 Q-15 -30 0 0" fill="#ff66a3" style="transform-origin: 0 0;"/>
+                <path class="petal petal-side" d="M0 0 Q25 -5 30 -20 Q15 -30 0 0" fill="#ff66a3" style="transform-origin: 0 0;"/>
+                <path class="petal petal-center" d="M0 0 Q-15 -25 0 -40 Q15 -25 0 0" fill="#ff4d4d" style="transform-origin: 0 0;"/>
+                <circle cx="0" cy="0" r="5" fill="#fcf6b1" class="pollen"/>
+            </g>
+          </g>
+          
+          <g id="particles-group" class="glowing-dot">
+            <circle cx="100" cy="40" r="2" fill="#fcf6b1" style="animation-delay: 0s;"/>
+            <circle cx="70" cy="60" r="2.5" fill="#fcf6b1" style="animation-delay: 1s;"/>
+            <circle cx="130" cy="70" r="1.5" fill="#fcf6b1" style="animation-delay: 0.5s;"/>
+            <circle cx="40" cy="100" r="2" fill="#fcf6b1" style="animation-delay: 1.5s;"/>
+            <circle cx="160" cy="120" r="2.5" fill="#fcf6b1" style="animation-delay: 0.8s;"/>
+          </g>
+        </svg>
+    </div>
+  </div>
+
+  <audio id="lagu" src="Musik.mp3"></audio>
+
+  <script>
+    // Array berisi kalimat yang akan dimunculkan satu per satu
+    const pesan = [
+      "Hai Isa :3",
+      "Im Sorry",
+      "If i cant bring you real flowers",
+      "Happy Birthday",
+      "I Love You"
+    ];
+
+    function startAnimation() {
+      // 1. Putar Musik
+      const lagu = document.getElementById('lagu');
+      lagu.play().catch(e => console.log("Autoplay dicegah:", e));
+
+      // 2. Sembunyikan tombol love
+      const btn = document.getElementById('open-btn');
+      btn.style.opacity = '0';
+      btn.style.transform = 'scale(0.5)';
+
+      setTimeout(() => {
+        btn.style.display = 'none';
+        
+        // 3. Tampilkan kontainer utama
+        const content = document.getElementById('content');
+        content.style.display = 'block';
+
+        // 4. Mulai Animasi Bunga
+        const flowerArea = document.getElementById('flower-area');
+        
+        // Tumbuhkan tangkai
+        animateStems();
+
+        // Aktifkan animasi mekar (CSS transitions)
+        setTimeout(() => {
+            flowerArea.classList.add('active');
+        }, 100);
+
+        // Tambahkan efek goyang setelah mekar sempurna (sesuaikan waktu)
+        setTimeout(() => {
+            flowerArea.classList.add('fully-bloomed');
+        }, 6000); // Mulai goyang setelah 6s (mekar sempurna)
+
+        // 5. Mulai tampilkan teks bergantian (sesuaikan jeda)
+        setTimeout(() => {
+          tampilkanTeks(0);
+        }, 5500); // Teks pertama muncul saat bunga sudah mulai mekar rimbun
+
+      }, 500);
+    }
+
+    function animateStems() {
+      const stems = document.querySelectorAll('.stem');
+      stems.forEach(stem => {
+        stem.getBoundingClientRect(); // Memicu reflow
+        stem.style.transition = 'stroke-dashoffset 2s ease-in-out';
+        stem.style.strokeDashoffset = '0';
+      });
+    }
+
+    function tampilkanTeks(index) {
+      if (index < pesan.length) {
+        const textContainer = document.getElementById('text-container');
+        textContainer.innerHTML = pesan[index];
+        textContainer.style.opacity = '1';
+
+        setTimeout(() => {
+          if (index < pesan.length - 1) {
+            textContainer.style.opacity = '0';
+            setTimeout(() => {
+              tampilkanTeks(index + 1);
+            }, 1000); 
+          }
+        }, 3000); 
+      }
+    }
+  </script>
+</body>
+</html>
